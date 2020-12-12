@@ -1,5 +1,3 @@
-/*Implementation of concurrent and iterative echo server using both connection and
-connectionless socket system calls.*/
 #include <stdio.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -13,7 +11,7 @@ connectionless socket system calls.*/
 #define PORT 8080
 #define SA struct sockaddr
 // Function designed for chat between client and server.
-void func(int sockfd)
+void func(int sockfd, int i)
 {
 char buff[MAX];
 int n;
@@ -23,7 +21,7 @@ bzero(buff, MAX);
 // read the message from client and copy it in buffer
 read(sockfd, buff, sizeof(buff));
 // print buffer which contains the client contents
-printf("From client: %s\t To client : ", buff);
+printf("From client %d: %s\t To client : ", i, buff);
 bzero(buff, MAX);
 n = 0;
 // copy server message in the buffer
@@ -33,7 +31,7 @@ while ((buff[n++] = getchar()) != '\n')
 write(sockfd, buff, sizeof(buff));
 // if msg contains "Exit" then server exit and chat ended.
 if (strncmp("exit", buff, 4) == 0) {
-printf("Server Exit...\n");
+printf("Client %d Exit...\n", i);
 break;
 }
 }
@@ -41,7 +39,7 @@ break;
 // Driver function
 int main()
 {
-int sockfd, connfd, len;
+int sockfd, connfd, len, i;
 struct sockaddr_in servaddr, cli;
 // socket create and verification
 sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -72,16 +70,24 @@ else
 printf("Server listening..\n");
 len = sizeof(cli);
 // Accept the data packet from client and verification
+i=1;
+while(i){
+
 connfd = accept(sockfd, (SA*)&cli, &len);
 if (connfd < 0) {
 printf("server acccept failed...\n");
 exit(0);
 }
 else
-printf("server acccept the client...\n");
+	if(fork()==0){
+printf("server acccept the client %d...\n", i);
 // Function for chatting between client and server
-func(connfd);
+func(connfd, i);
+}
+else
+close(connfd);
+i+=1;
+}
 // After chatting close the socket
 close(sockfd);
 }
-
